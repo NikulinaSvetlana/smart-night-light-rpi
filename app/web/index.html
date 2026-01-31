@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Nightlight</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <!--
+        Минимальная веб-панель управления.
+
+        Здесь нет сборки и фреймворков: это один HTML + CSS + JS.
+        Скрипт app.js общается с FastAPI по тем же ручкам, что и другие клиенты
+        (например, Telegram-бот): /api/v1/devices/... с Bearer-токеном.
+      -->
+      <h1>Умный ночник</h1>
+
+      <section class="card">
+        <h2>Доступ</h2>
+        <label>
+          <!-- Токен хранится локально (localStorage), сервер его не запоминает. -->
+          API токен
+          <input id="token" type="password" autocomplete="off" />
+        </label>
+        <button id="saveToken">Сохранить</button>
+      </section>
+
+      <section class="card">
+        <h2>Управление</h2>
+        <div class="row">
+          <!-- Кнопки отправляют команды в API и сразу выводят ответ (новое состояние). -->
+          <button id="btnOn">Включить</button>
+          <button id="btnOff">Выключить</button>
+        </div>
+        <label>
+          <!-- Ползунок работает в процентах 0..100, но в API уходит 0..1. -->
+          Яркость: <span id="brightnessValue">0%</span>
+          <input id="brightness" type="range" min="0" max="100" value="0" />
+        </label>
+        <div class="row">
+          <button id="refresh">Обновить статус</button>
+        </div>
+        <!-- Статус выводим как JSON, чтобы удобно было дебажить. -->
+        <pre id="status" class="status"></pre>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,32 @@
+services:
+  nightlight:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8443:8443"
+    environment:
+      - NIGHTLIGHT_API_TOKEN=${NIGHTLIGHT_API_TOKEN}
+      - NIGHTLIGHT_GPIO_BACKEND=${NIGHTLIGHT_GPIO_BACKEND:-mock}
+      - NIGHTLIGHT_DEVICE_ID=${NIGHTLIGHT_DEVICE_ID:-nightlight}
+      - NIGHTLIGHT_SSLCERTFILE=/certs/cert.pem
+      - NIGHTLIGHT_SSLKEYFILE=/certs/key.pem
+      - NIGHTLIGHT_LOG_LEVEL=${NIGHTLIGHT_LOG_LEVEL:-INFO}
+    volumes:
+      - ./certs:/certs:ro
+
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - nightlight
+    environment:
+      - NIGHTLIGHT_API_TOKEN=${NIGHTLIGHT_API_TOKEN}
+      - NIGHTLIGHT_TELEGRAM_BOT_TOKEN=${NIGHTLIGHT_TELEGRAM_BOT_TOKEN}
+      - NIGHTLIGHT_TELEGRAM_ALLOWED_CHAT_IDS=${NIGHTLIGHT_TELEGRAM_ALLOWED_CHAT_IDS:-}
+      - NIGHTLIGHT_TELEGRAM_API_URL=${NIGHTLIGHT_TELEGRAM_API_URL:-https://nightlight:8443}
+      - NIGHTLIGHT_TELEGRAM_TLS_VERIFY=${NIGHTLIGHT_TELEGRAM_TLS_VERIFY:-false}
+      - NIGHTLIGHT_DEVICE_ID=${NIGHTLIGHT_DEVICE_ID:-nightlight}
+      - NIGHTLIGHT_LOG_LEVEL=${NIGHTLIGHT_LOG_LEVEL:-INFO}
+    command: ["python", "-m", "app.telegram_bot.main"]

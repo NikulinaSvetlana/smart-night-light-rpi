@@ -1,0 +1,78 @@
+/*
+  Минимальные стили для веб-панели управления.
+
+  Цель CSS:
+  - сделать страницу читаемой на телефоне и на десктопе,
+  - использовать “тёмную” палитру, подходящую для ночника,
+  - не тянуть внешние библиотеки (bootstrap и т.п.) для MVP.
+*/
+
+body {
+  /* Системный шрифт: быстрый рендер и привычный вид на каждой платформе. */
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  /* Тёмный фон, чтобы UI не слепил ночью. */
+  background: #0b0c10;
+  color: #e5e7eb;
+}
+
+.container {
+  /* Центруем контент и ограничиваем ширину, чтобы строки не растягивались. */
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.card {
+  /* Карточки разделяют логические блоки: “доступ” и “управление”. */
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+label {
+  /* label блочный, чтобы input не скакал по строке. */
+  display: block;
+  margin: 10px 0;
+}
+
+input[type="password"],
+input[type="range"] {
+  /* Поля на всю ширину — проще пользоваться на мобильных. */
+  width: 100%;
+  margin-top: 6px;
+}
+
+.row {
+  /* Простая горизонтальная раскладка кнопок. */
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+button {
+  /* Кнопки в “карточном” стиле, без ярких акцентов. */
+  padding: 10px 12px;
+  border: 1px solid #374151;
+  border-radius: 10px;
+  background: #111827;
+  color: #e5e7eb;
+  cursor: pointer;
+}
+
+button:hover {
+  /* Лёгкая подсветка на hover, чтобы было видно интерактивность. */
+  background: #0f172a;
+}
+
+.status {
+  /* Блок со статусом — это pre, поэтому делаем его похожим на “терминал”. */
+  background: #0f172a;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  padding: 12px;
+  overflow: auto;
+}
