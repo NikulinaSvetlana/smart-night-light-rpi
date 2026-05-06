@@ -1,9 +1,8 @@
 # Smart Nightlight MVP (Raspberry Pi + Web + Telegram)
 
 ## Состав команды
-| ФИО | Никнейм на GitHub |
-| --- | --- |
-| Никулина Светлана Ивановна | [NikulinaSvetlana](https://github.com/NikulinaSvetlana) |
+
+ Никулина Светлана Ивановна | [NikulinaSvetlana](https://github.com/NikulinaSvetlana) |
 
 ## Тема проекта
 Устройство на базе Raspberry Pi с возможностью удаленного управления через телефон (включение/выключение, регулировка яркости).
