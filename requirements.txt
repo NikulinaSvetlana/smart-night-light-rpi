@@ -3,3 +3,4 @@ pydantic-settings==2.7.0
 uvicorn[standard]==0.34.0
 httpx==0.28.1
 python-telegram-bot==21.10
+fake-rpi==0.7.1
