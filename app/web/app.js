@@ -1,120 +1,172 @@
 /*
-  Минимальный фронтенд без сборки (vanilla JS).
+  Фронтенд управления ночником (vanilla JS, без сборки).
 
-  Задача этой страницы:
-  - хранить API токен в localStorage,
-  - отправлять команды в FastAPI (/api/v1/...),
-  - отображать текущее состояние ночника (JSON) для отладки.
-
-  Почему без фреймворков:
-  - MVP должен запускаться “из коробки” без npm/yarn,
-  - статика раздаётся прямо FastAPI (см. app/api/factory.py),
-  - код легко читать и быстро править на Raspberry Pi.
+  - Хранит API-токен в localStorage.
+  - Управляет LED через FastAPI (/api/v1/...).
+  - Визуально эмулирует яркость LED (круг-«лампа» на экране).
+  - Работает на телефоне через Wi-Fi (мобильный браузер).
 */
 
+const $ = (id) => document.getElementById(id);
+
+/* ── Токен ── */
+
 function getToken() {
-  // Токен лежит в localStorage, чтобы не вводить его каждый раз после обновления страницы.
   return localStorage.getItem("nightlight_api_token") || "";
 }
 
 function setToken(value) {
-  // Сохраняем токен под фиксированным ключом.
   localStorage.setItem("nightlight_api_token", value);
 }
 
 function authHeaders() {
-  // Если токен задан — добавляем Authorization, иначе оставляем заголовки пустыми.
   const token = getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-async function api(path, options) {
-  // Унифицированный helper для запросов к API:
-  // - выставляет JSON Content-Type,
-  // - подмешивает Authorization,
-  // - превращает не-2xx ответы в понятное исключение.
+/* ── API ── */
+
+async function api(path, options = {}) {
   const resp = await fetch(path, {
     ...options,
-    headers: { "Content-Type": "application/json", ...authHeaders(), ...(options?.headers || {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+      ...(options.headers || {}),
+    },
   });
-
   if (!resp.ok) {
-    // Сервер мог вернуть JSON или текст — для простоты читаем как текст.
     const text = await resp.text();
-    throw new Error(`${resp.status} ${resp.statusText}: ${text}`);
+    throw new Error(`${resp.status}: ${text}`);
   }
-
-  // Все наши ручки возвращают JSON.
   return resp.json();
 }
 
 async function setPower(isOn) {
-  // Команда питания: true => включить, false => выключить.
-  return api(`/api/v1/devices/nightlight/power`, {
+  return api("/api/v1/devices/nightlight/power", {
     method: "POST",
     body: JSON.stringify({ is_on: isOn }),
   });
 }
 
-async function setBrightness(brightness01) {
-  // Команда яркости принимает 0..1, поэтому UI переводит проценты в долю.
-  return api(`/api/v1/devices/nightlight/brightness`, {
+async function setBrightness(val) {
+  return api("/api/v1/devices/nightlight/brightness", {
     method: "POST",
-    body: JSON.stringify({ brightness: brightness01 }),
+    body: JSON.stringify({ brightness: val }),
   });
 }
 
 async function getState() {
-  // Текущее состояние устройства.
-  return api(`/api/v1/devices/nightlight/state`, { method: "GET" });
+  return api("/api/v1/devices/nightlight/state", { method: "GET" });
+}
+
+/* ── UI: визуальный эмулятор лампы ── */
+
+function updateLamp(isOn, brightness) {
+  const lamp = $("lamp");
+  const label = $("lampLabel");
+  const b = isOn ? brightness : 0;
+
+  // Плавно меняем прозрачность и свечение круга-«лампы»
+  lamp.style.opacity = String(0.06 + b * 0.94);
+  lamp.style.boxShadow =
+    b > 0
+      ? `0 0 ${b * 70}px ${b * 25}px rgba(251,191,36,${b * 0.6})`
+      : "0 0 0 0 transparent";
+
+  label.textContent = isOn ? `${Math.round(brightness * 100)}%` : "ВЫКЛ";
+}
+
+function updateButtons(isOn) {
+  $("btnOn").classList.toggle("active", isOn);
+  $("btnOff").classList.toggle("active", !isOn);
+}
+
+function updateSliderTrack(slider) {
+  const pct = slider.value;
+  slider.style.background =
+    `linear-gradient(to right, #fbbf24 0%, #fbbf24 ${pct}%, #1f2937 ${pct}%)`;
 }
 
 function renderState(state) {
-  // Отрисовка состояния:
-  // - диапазон яркости 0..1 переводим в проценты для range input,
-  // - JSON выводим как “сырой” текст для удобной диагностики.
-  const percent = Math.round((state.brightness || 0) * 100);
-  document.getElementById("brightness").value = String(percent);
-  document.getElementById("brightnessValue").textContent = `${percent}%`;
-  document.getElementById("status").textContent = JSON.stringify(state, null, 2);
+  const brightness = state.brightness || 0;
+  const percent = Math.round(brightness * 100);
+
+  const slider = $("brightness");
+  slider.value = String(percent);
+  $("brightnessValue").textContent = `${percent}%`;
+  updateSliderTrack(slider);
+
+  $("status").textContent = JSON.stringify(state, null, 2);
+
+  updateLamp(state.is_on, brightness);
+  updateButtons(state.is_on);
+  setConn("ok");
 }
 
-function wire() {
-  // Привязка DOM-элементов к обработчикам событий.
-  const tokenInput = document.getElementById("token");
-  tokenInput.value = getToken();
+/* ── Индикатор подключения ── */
 
-  document.getElementById("saveToken").addEventListener("click", () => {
-    // Храним токен “как есть”, но убираем лишние пробелы по краям.
+function setConn(status) {
+  const dot = $("connStatus");
+  dot.classList.remove("ok", "err");
+  dot.classList.add(status);
+}
+
+/* ── Безопасный вызов API с обработкой ошибок ── */
+
+async function safeCall(fn) {
+  try {
+    return await fn();
+  } catch (e) {
+    setConn("err");
+    $("status").textContent = e.message;
+    return null;
+  }
+}
+
+/* ── Привязка событий ── */
+
+function wire() {
+  // Токен
+  const tokenInput = $("token");
+  tokenInput.value = getToken();
+  $("saveToken").addEventListener("click", () => {
     setToken(tokenInput.value.trim());
   });
 
-  document.getElementById("btnOn").addEventListener("click", async () => {
-    // Включаем и сразу отображаем новое состояние, которое вернуло API.
-    renderState(await setPower(true));
+  // Питание
+  $("btnOn").addEventListener("click", () =>
+    safeCall(async () => renderState(await setPower(true)))
+  );
+  $("btnOff").addEventListener("click", () =>
+    safeCall(async () => renderState(await setPower(false)))
+  );
+
+  // Ползунок яркости
+  const slider = $("brightness");
+
+  slider.addEventListener("input", () => {
+    const pct = Number(slider.value);
+    $("brightnessValue").textContent = `${pct}%`;
+    updateSliderTrack(slider);
+    // Превью лампы в реальном времени при перетаскивании
+    updateLamp(pct > 0, pct / 100);
   });
 
-  document.getElementById("btnOff").addEventListener("click", async () => {
-    // Выключаем и отображаем новое состояние.
-    renderState(await setPower(false));
-  });
+  slider.addEventListener("change", () =>
+    safeCall(async () => {
+      const value = Number(slider.value) / 100;
+      renderState(await setBrightness(value));
+    })
+  );
 
-  const brightness = document.getElementById("brightness");
-  brightness.addEventListener("input", () => {
-    // input — частое событие при движении ползунка, поэтому тут только UI-обновление.
-    document.getElementById("brightnessValue").textContent = `${brightness.value}%`;
-  });
-  brightness.addEventListener("change", async () => {
-    // change — срабатывает после отпускания ползунка, тут уже можно дергать API.
-    const value = Number(brightness.value) / 100;
-    renderState(await setBrightness(value));
-  });
+  // Обновить
+  $("refresh").addEventListener("click", () =>
+    safeCall(async () => renderState(await getState()))
+  );
 
-  document.getElementById("refresh").addEventListener("click", async () => {
-    // Ручная синхронизация — полезно, если состояние поменялось из другого клиента (бот/скрипт).
-    renderState(await getState());
-  });
+  // Загрузить текущее состояние при открытии страницы
+  safeCall(async () => renderState(await getState()));
 }
 
-// Инициализация при загрузке скрипта.
 wire();

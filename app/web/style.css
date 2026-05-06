@@ -1,78 +1,232 @@
 /*
-  Минимальные стили для веб-панели управления.
-
-  Цель CSS:
-  - сделать страницу читаемой на телефоне и на десктопе,
-  - использовать “тёмную” палитру, подходящую для ночника,
-  - не тянуть внешние библиотеки (bootstrap и т.п.) для MVP.
+  Мобильный UI для управления ночником.
+  Тёмная палитра, крупные touch-элементы, визуальный эмулятор LED.
 */
 
-body {
-  /* Системный шрифт: быстрый рендер и привычный вид на каждой платформе. */
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+* {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  /* Тёмный фон, чтобы UI не слепил ночью. */
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   background: #0b0c10;
   color: #e5e7eb;
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.container {
-  /* Центруем контент и ограничиваем ширину, чтобы строки не растягивались. */
-  max-width: 720px;
+main {
+  max-width: 420px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.card {
-  /* Карточки разделяют логические блоки: “доступ” и “управление”. */
+/* -- Header -- */
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+header h1 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.conn-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #6b7280;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+.conn-dot.ok  { background: #22c55e; }
+.conn-dot.err { background: #ef4444; }
+
+/* -- Lamp (visual LED emulator) -- */
+
+.lamp-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 0 8px;
+}
+
+.lamp {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, #fffde7, #fbbf24, #d97706);
+  opacity: 0.06;
+  box-shadow: 0 0 0 0 transparent;
+  transition: opacity 0.35s ease, box-shadow 0.35s ease;
+}
+
+.lamp-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  letter-spacing: 0.04em;
+}
+
+/* -- Controls card -- */
+
+.controls {
   background: #111827;
   border: 1px solid #1f2937;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 16px;
-  margin: 16px 0;
-}
-
-label {
-  /* label блочный, чтобы input не скакал по строке. */
-  display: block;
-  margin: 10px 0;
-}
-
-input[type="password"],
-input[type="range"] {
-  /* Поля на всю ширину — проще пользоваться на мобильных. */
-  width: 100%;
-  margin-top: 6px;
-}
-
-.row {
-  /* Простая горизонтальная раскладка кнопок. */
   display: flex;
-  gap: 10px;
-  margin: 10px 0;
+  flex-direction: column;
+  gap: 12px;
 }
 
-button {
-  /* Кнопки в “карточном” стиле, без ярких акцентов. */
-  padding: 10px 12px;
-  border: 1px solid #374151;
-  border-radius: 10px;
-  background: #111827;
-  color: #e5e7eb;
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+/* -- Range slider -- */
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #1f2937;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fbbf24;
+  border: 2px solid #0b0c10;
   cursor: pointer;
 }
 
-button:hover {
-  /* Лёгкая подсветка на hover, чтобы было видно интерактивность. */
-  background: #0f172a;
+input[type="range"]::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fbbf24;
+  border: 2px solid #0b0c10;
+  cursor: pointer;
 }
 
-.status {
-  /* Блок со статусом — это pre, поэтому делаем его похожим на “терминал”. */
-  background: #0f172a;
-  border: 1px solid #1f2937;
-  border-radius: 10px;
+/* -- Buttons -- */
+
+.btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.btn {
   padding: 12px;
-  overflow: auto;
+  border: 1px solid #374151;
+  border-radius: 10px;
+  background: #1f2937;
+  color: #e5e7eb;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.btn:active {
+  background: #374151;
+}
+
+.btn-on.active {
+  background: #14532d;
+  border-color: #22c55e;
+  color: #bbf7d0;
+}
+
+.btn-off.active {
+  background: #7f1d1d;
+  border-color: #ef4444;
+  color: #fecaca;
+}
+
+.btn-secondary {
+  background: transparent;
+  border-color: #374151;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  padding: 10px;
+}
+
+/* -- Collapsible panels (details/summary) -- */
+
+.panel {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.panel summary {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.panel-body {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-body label {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.panel-body input[type="password"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  background: #0b0c10;
+  color: #e5e7eb;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.panel-body input[type="password"]:focus {
+  border-color: #fbbf24;
+}
+
+.status-pre {
+  margin: 0 16px 16px;
+  padding: 12px;
+  background: #0b0c10;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #9ca3af;
 }

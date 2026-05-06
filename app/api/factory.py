@@ -25,6 +25,7 @@ from collections.abc import Awaitable, Callable
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import Response
 
@@ -80,6 +81,15 @@ def create_app(
 
     registry = registry or build_registry(settings)
     app = FastAPI(title="Nightlight", version="0.1.0")
+
+    # CORS — разрешаем доступ с любых источников в локальной сети,
+    # чтобы телефон мог обращаться к API RPi по IP-адресу.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     # Храним зависимости в app.state, чтобы:
     # - зависимости FastAPI могли доставать их через Request,

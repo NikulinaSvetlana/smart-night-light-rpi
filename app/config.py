@@ -32,7 +32,7 @@ class Settings(BaseSettings):
         ),
     )
 
-    gpio_backend: str = Field(default="mock", description="'mock' или 'rpi'")
+    gpio_backend: str = Field(default="mock", description="'mock', 'fake_rpi' или 'rpi'")
     led_gpio_pin: int = Field(default=18, ge=0)
     pwm_frequency_hz: int = Field(default=800, ge=1)
 

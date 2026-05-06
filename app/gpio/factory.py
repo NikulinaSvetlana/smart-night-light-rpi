@@ -23,6 +23,11 @@ def create_pwm_output(backend: str, *, pin: int, frequency_hz: int) -> PwmOutput
     if backend_norm == "mock":
         # Mock не требует pin, поэтому он игнорируется.
         return MockPwmOutput(frequency_hz=frequency_hz)
+    if backend_norm == "fake_rpi":
+        # fake-rpi эмулирует RPi.GPIO на обычном ПК.
+        from .fake_rpi_gpio import FakeRpiPwmOutput
+
+        return FakeRpiPwmOutput(pin=pin, frequency_hz=frequency_hz)
     if backend_norm == "rpi":
         # Импортируем здесь, чтобы на не-RPi окружениях модуль не падал при импорте.
         from .rpi_gpio import RpiPwmOutput

@@ -2,49 +2,52 @@
 <html lang="ru">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>Nightlight</title>
     <link rel="stylesheet" href="/static/style.css" />
+    <meta name="theme-color" content="#0b0c10" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
   </head>
   <body>
-    <main class="container">
-      <!--
-        Минимальная веб-панель управления.
+    <main>
+      <header>
+        <h1>Ночник</h1>
+        <span id="connStatus" class="conn-dot" title="Статус подключения"></span>
+      </header>
 
-        Здесь нет сборки и фреймворков: это один HTML + CSS + JS.
-        Скрипт app.js общается с FastAPI по тем же ручкам, что и другие клиенты
-        (например, Telegram-бот): /api/v1/devices/... с Bearer-токеном.
-      -->
-      <h1>Умный ночник</h1>
+      <!-- Визуальный эмулятор LED — круг с подсветкой, яркость меняется в реальном времени -->
+      <div class="lamp-wrap">
+        <div id="lamp" class="lamp"></div>
+        <span id="lampLabel" class="lamp-label">—</span>
+      </div>
 
-      <section class="card">
-        <h2>Доступ</h2>
-        <label>
-          <!-- Токен хранится локально (localStorage), сервер его не запоминает. -->
-          API токен
-          <input id="token" type="password" autocomplete="off" />
-        </label>
-        <button id="saveToken">Сохранить</button>
+      <section class="controls">
+        <div class="slider-header">
+          <span>Яркость</span>
+          <span id="brightnessValue">0%</span>
+        </div>
+        <input id="brightness" type="range" min="0" max="100" value="0" />
+
+        <div class="btn-row">
+          <button id="btnOn" class="btn btn-on">Включить</button>
+          <button id="btnOff" class="btn btn-off">Выключить</button>
+        </div>
+        <button id="refresh" class="btn btn-secondary">Обновить</button>
       </section>
 
-      <section class="card">
-        <h2>Управление</h2>
-        <div class="row">
-          <!-- Кнопки отправляют команды в API и сразу выводят ответ (новое состояние). -->
-          <button id="btnOn">Включить</button>
-          <button id="btnOff">Выключить</button>
+      <details class="panel">
+        <summary>Настройки</summary>
+        <div class="panel-body">
+          <label for="token">API токен</label>
+          <input id="token" type="password" autocomplete="off" placeholder="Введите токен" />
+          <button id="saveToken" class="btn btn-secondary">Сохранить</button>
         </div>
-        <label>
-          <!-- Ползунок работает в процентах 0..100, но в API уходит 0..1. -->
-          Яркость: <span id="brightnessValue">0%</span>
-          <input id="brightness" type="range" min="0" max="100" value="0" />
-        </label>
-        <div class="row">
-          <button id="refresh">Обновить статус</button>
-        </div>
-        <!-- Статус выводим как JSON, чтобы удобно было дебажить. -->
-        <pre id="status" class="status"></pre>
-      </section>
+      </details>
+
+      <details class="panel">
+        <summary>Отладка</summary>
+        <pre id="status" class="status-pre">—</pre>
+      </details>
     </main>
     <script src="/static/app.js"></script>
   </body>
